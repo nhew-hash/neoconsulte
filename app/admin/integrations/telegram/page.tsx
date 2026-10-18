@@ -93,6 +93,12 @@ export default function TelegramIntegrationPage() {
                 Iniciar conexão
               </button>
               <button
+                onClick={() => action('/api/admin/telegram/approve')}
+                className="rounded-full border border-emerald-400/40 px-4 py-2 text-sm text-emerald-200"
+              >
+                Validar sessão demo
+              </button>
+              <button
                 onClick={() => action('/api/admin/telegram/test', { message: 'Teste de integração Telegram' })}
                 className="rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-100"
               >
