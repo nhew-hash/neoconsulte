@@ -7,3 +7,8 @@ node_modules
 prisma/dev.db
 prisma/dev.db-journal
 npm-debug.log*
+
+prisma/test.db
+prisma/test.db-journal
+
+.vercel

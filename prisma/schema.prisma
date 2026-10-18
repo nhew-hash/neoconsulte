@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -126,22 +126,33 @@ model CreditTransaction {
 }
 
 model QueryRequest {
-  id               String      @id @default(cuid())
-  userId           String
-  category         String
-  rawInput         String
-  providerName     String      @default("mock")
+  id                String      @id @default(cuid())
+  userId            String
+  category          String
+  rawInput          String // sempre mascarado; o valor real fica só em payloadEnc até o envio
+  payloadEnc        String? // entrada criptografada; apagada após envio, falha ou conclusão
+  providerName      String      @default("demo")
   providerRequestId String?
-  status           QueryStatus @default(WAITING)
-  costCredits      Int         @default(0)
-  attempts         Int         @default(0)
-  correlationId    String?
-  providerResult   String?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  idempotencyKey    String?
+  status            QueryStatus @default(WAITING)
+  costCredits       Int         @default(0)
+  attempts          Int         @default(0)
+  correlationId     String?     @unique
+  providerResult    String? // resultado criptografado
+  errorCode         String?
+  refunded          Boolean     @default(false)
+  dispatchedAt      DateTime?
+  completedAt       DateTime?
+  deadlineAt        DateTime?
+  nextAttemptAt     DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 
-  user  User               @relation(fields: [userId], references: [id])
+  user   User               @relation(fields: [userId], references: [id])
   events QueryStatusEvent[]
+
+  @@unique([userId, idempotencyKey])
+  @@index([status, nextAttemptAt])
 }
 
 model QueryStatusEvent {
@@ -194,4 +205,13 @@ model Session {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
+}
+
+// Registro de mensagens recebidas do provider, só metadados (sem conteúdo), para deduplicação.
+model InboundMessage {
+  id            String   @id @default(cuid())
+  externalId    String   @unique
+  correlationId String?
+  outcome       String
+  receivedAt    DateTime @default(now())
 }

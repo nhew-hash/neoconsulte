@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/db';
 import { getSessionByToken } from '@/lib/session';
+import QueriesPanel from './queries-panel';
 
 export default async function DashboardPage() {
   const token = cookies().get('neo_session')?.value;
@@ -43,7 +44,7 @@ export default async function DashboardPage() {
           </div>
           <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5">
             <div className="text-sm text-slate-400">Solicitações em processamento</div>
-            <div className="mt-3 text-3xl font-semibold text-white">{recentQueries.filter((q) => q.status !== 'COMPLETED').length}</div>
+            <div className="mt-3 text-3xl font-semibold text-white">{recentQueries.filter((q) => q.status === 'WAITING' || q.status === 'PROCESSING').length}</div>
             <div className="mt-2 text-xs text-slate-400">Aguardando resposta</div>
           </div>
           <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5">
@@ -54,33 +55,14 @@ export default async function DashboardPage() {
         </section>
 
         <section className="mt-8 grid gap-6 xl:grid-cols-[1.5fr_0.8fr]">
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white">Histórico recente</h2>
-              <span className="rounded-full border border-slate-700 px-3 py-1 text-sm text-slate-200">Filtrar</span>
-            </div>
-
-            <div className="space-y-4">
-              {recentQueries.map((entry) => (
-                <div key={entry.id} className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                  <div>
-                    <div className="font-medium text-white">Consulta de {entry.category}</div>
-                    <div className="text-sm text-slate-400">{new Date(entry.createdAt).toLocaleString('pt-BR')}</div>
-                  </div>
-                  <span className={`rounded-full px-2 py-1 text-xs ${entry.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-amber-500/10 text-amber-300'}`}>
-                    {entry.status === 'COMPLETED' ? 'Concluída' : 'Em processamento'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <QueriesPanel />
 
           <aside className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
             <h2 className="text-xl font-semibold text-white">Avisos do sistema</h2>
             <div className="mt-5 space-y-4">
               <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
                 <div className="text-sm font-medium text-white">Provider em modo simulado</div>
-                <div className="mt-2 text-sm text-slate-300">O provedor de demonstração está ativo e não representa um canal real do Telegram.</div>
+                <div className="mt-2 text-sm text-slate-300">O transporte de demonstração está ativo. Nenhum dado real é consultado.</div>
               </div>
               <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
                 <div className="text-sm font-medium text-white">Créditos configurados</div>

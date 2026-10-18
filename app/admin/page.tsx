@@ -16,6 +16,15 @@ export default async function AdminPage() {
   const pendingPayments = await prisma.payment.count({ where: { status: 'PENDING' } });
   const failedQueries = await prisma.queryRequest.count({ where: { status: 'FAILED' } });
   const failureRate = queryCount > 0 ? Math.round((failedQueries / queryCount) * 100) : 0;
+  const transportName = process.env.QUERY_TRANSPORT ?? 'demo';
+  const grouped = await prisma.queryRequest.groupBy({ by: ['status'], _count: { _all: true } });
+  const counts = Object.fromEntries(grouped.map((g) => [g.status, g._count._all])) as Record<string, number>;
+  const reviewItems = await prisma.queryRequest.findMany({
+    where: { status: 'REVIEW' },
+    take: 10,
+    orderBy: { updatedAt: 'desc' },
+    select: { id: true, category: true, rawInput: true },
+  });
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-50">
@@ -39,35 +48,30 @@ export default async function AdminPage() {
 
         <section className="mt-8 rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
           <div className="mb-5 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-white">Status dos providers</h2>
-            <span className="rounded-full border border-slate-700 px-3 py-1 text-sm text-slate-200">Atualizar</span>
+            <h2 className="text-xl font-semibold text-white">Fila de consultas</h2>
+            <span className="rounded-full border border-slate-700 px-3 py-1 text-sm text-slate-200">Transporte: {transportName}</span>
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm text-slate-300">
-              <thead className="text-slate-400">
-                <tr>
-                  <th className="pb-3">Provider</th>
-                  <th className="pb-3">Status</th>
-                  <th className="pb-3">Tentativas</th>
-                  <th className="pb-3">Último evento</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-t border-slate-800">
-                  <td className="py-4 font-medium text-white">Telegram</td>
-                  <td className="py-4"><span className="rounded-full bg-amber-500/10 px-2 py-1 text-xs text-amber-300">Em revisão</span></td>
-                  <td className="py-4">7</td>
-                  <td className="py-4">2 min atrás</td>
-                </tr>
-                <tr className="border-t border-slate-800">
-                  <td className="py-4 font-medium text-white">Mock</td>
-                  <td className="py-4"><span className="rounded-full bg-emerald-500/10 px-2 py-1 text-xs text-emerald-300">Operacional</span></td>
-                  <td className="py-4">3</td>
-                  <td className="py-4">5 min atrás</td>
-                </tr>
-              </tbody>
-            </table>
+          <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-6">
+            {[['WAITING', 'Aguardando'], ['PROCESSING', 'Processando'], ['COMPLETED', 'Concluídas'], ['FAILED', 'Falhas'], ['REVIEW', 'Em revisão'], ['CANCELLED', 'Canceladas']].map(([key, label]) => (
+              <div key={key} className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                <div className="text-xs text-slate-400">{label}</div>
+                <div className="mt-2 text-2xl font-semibold text-white">{counts[key] ?? 0}</div>
+              </div>
+            ))}
           </div>
+          {reviewItems.length > 0 ? (
+            <div className="mt-6">
+              <h3 className="text-sm font-medium text-amber-300">Aguardando revisão manual</h3>
+              <p className="mt-1 text-xs text-slate-400">Para encerrar com estorno: POST /api/admin/queries/&lt;id&gt;/resolve</p>
+              <div className="mt-3 space-y-2">
+                {reviewItems.map((item) => (
+                  <div key={item.id} className="rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-sm text-slate-300">
+                    {item.id} · {item.category} · {item.rawInput}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </section>
 
         <section className="mt-8 rounded-3xl border border-slate-800 bg-slate-900/80 p-6">

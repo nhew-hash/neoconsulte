@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -59,7 +60,7 @@ export default function SignupPage() {
         </form>
 
         <div className="mt-6 text-center text-sm text-slate-400">
-          Já possui conta? <a href="/login" className="text-teal-300">Entrar</a>
+          Já possui conta? <Link href="/login" className="text-teal-300">Entrar</Link>
         </div>
       </div>
     </main>
