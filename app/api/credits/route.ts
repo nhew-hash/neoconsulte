@@ -1,12 +1,39 @@
-export async function GET() {
+import { prisma } from '@/lib/db';
+import { getSessionByToken } from '@/lib/session';
+
+export async function GET(request: Request) {
+  const cookie = request.headers.get('cookie') || '';
+  const match = cookie.match(/neo_session=([^;]+)/);
+  const token = match ? match[1] : null;
+
+  if (!token) {
+    return Response.json({ ok: false, error: 'Autenticação necessária' }, { status: 401 });
+  }
+
+  const session = await getSessionByToken(token);
+  if (!session?.user) {
+    return Response.json({ ok: false, error: 'Sessão inválida' }, { status: 401 });
+  }
+
+  const account = await prisma.creditAccount.findUnique({ where: { userId: session.user.id } });
+
+  const transactions = await prisma.creditTransaction.findMany({
+    where: { accountId: account?.id ?? '' },
+    orderBy: { createdAt: 'desc' },
+    take: 20,
+  });
+
   return Response.json({
     ok: true,
-    balance: 18,
-    available: 18,
-    transactions: [
-      { id: 'txn_101', date: '2026-10-18', type: 'purchase', amount: 30, reference: 'pkg-3', note: 'Crédito comprado' },
-      { id: 'txn_102', date: '2026-10-18', type: 'consumed', amount: -2, reference: 'query_abc', note: 'Consulta CPF' },
-      { id: 'txn_103', date: '2026-10-17', type: 'promotional', amount: 5, reference: 'promo-01', note: 'Bônus de demonstração' },
-    ],
+    balance: account?.balance ?? 0,
+    available: account?.balance ?? 0,
+    transactions: transactions.map((t) => ({
+      id: t.id,
+      date: t.createdAt.toISOString(),
+      type: t.type,
+      amount: t.amount,
+      reference: t.reference,
+      note: t.reason,
+    })),
   });
 }

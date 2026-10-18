@@ -73,7 +73,6 @@ export class QueryJobService {
 export class ProviderHealthService {
   async checkAll(): Promise<ProviderHealthStatus[]> {
     const provider = new MockQueryProvider();
-    const health = await provider.health();
-    return [health];
+    return [await provider.health()];
   }
 }
