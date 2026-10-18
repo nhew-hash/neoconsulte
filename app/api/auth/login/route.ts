@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import bcrypt from 'bcryptjs';
 
 const bodySchema = z.object({
   email: z.string().email(),
@@ -9,10 +8,14 @@ const bodySchema = z.object({
 export async function POST(request: Request) {
   try {
     const body = bodySchema.parse(await request.json());
-    const validDemo = body.email === 'cliente@neoconsulte.demo' || body.email === 'admin@neoconsulte.demo';
-    const matches = validDemo && body.password === 'demo123';
 
-    if (!matches) {
+    const demoUsers = {
+      'cliente@neoconsulte.demo': { role: 'customer', redirect: '/dashboard' },
+      'admin@neoconsulte.demo': { role: 'admin', redirect: '/admin' },
+    } as const;
+
+    const user = demoUsers[body.email as keyof typeof demoUsers];
+    if (!user || body.password !== 'demo123') {
       return Response.json({ ok: false, error: 'Credenciais inválidas' }, { status: 401 });
     }
 
@@ -20,8 +23,9 @@ export async function POST(request: Request) {
       ok: true,
       user: {
         email: body.email,
-        role: body.email.includes('admin') ? 'admin' : 'customer',
+        role: user.role,
       },
+      redirect: user.redirect,
       message: 'Login validado em modo demo. Para produção, usar autenticação server-side com cookies seguros e hashing forte.',
     });
   } catch (error) {

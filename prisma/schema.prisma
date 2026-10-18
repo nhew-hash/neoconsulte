@@ -1,20 +1,186 @@
-export type QueryCategory = 'CPF' | 'CNPJ' | 'Nome' | 'Telefone' | 'Placa';
-
-export interface QueryRequestInput {
-  category: QueryCategory;
-  input: string;
-  customerId?: string;
+generator client {
+  provider = "prisma-client-js"
 }
 
-export async function enqueueQuery(input: QueryRequestInput) {
-  return {
-    ok: true,
-    requestId: `demo-${Math.random().toString(36).slice(2, 10)}`,
-    correlationId: `corr-${Math.random().toString(36).slice(2, 10)}`,
-    provider: 'mock',
-    status: 'queued',
-    costCredits: 2,
-    category: input.category,
-    providerNote: 'Provider em modo de demonstração. Nenhum dado pessoal real é exibido.',
-  };
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  SUPPORT
+  CUSTOMER
+}
+
+enum QueryStatus {
+  WAITING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REVIEW
+}
+
+enum PaymentStatus {
+  PENDING
+  CONFIRMED
+  REFUNDED
+  FAILED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String
+  role          Role      @default(CUSTOMER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profile       Profile?
+  creditAccount CreditAccount?
+  payments      Payment[]
+  queryRequests QueryRequest[]
+  supportTickets SupportTicket[]
+  auditLogs     AuditLog[]
+  subscriptions Subscription[]
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  phone     String?
+  company   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Plan {
+  id                String         @id @default(cuid())
+  name              String
+  priceCents        Int
+  active            Boolean        @default(true)
+  version           Int            @default(1)
+  creditsIncluded   Int
+  validDays         Int?
+  categoriesAllowed String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id         String    @id @default(cuid())
+  userId     String
+  planId     String
+  status     String    @default("active")
+  startsAt   DateTime  @default(now())
+  renewsAt  DateTime?
+  canceledAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  plan Plan @relation(fields: [planId], references: [id])
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  userId      String
+  planId      String?
+  amountCents Int
+  status      PaymentStatus @default(PENDING)
+  provider    String?
+  providerRef String?
+  createdAt   DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model CreditAccount {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  balance   Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  transactions CreditTransaction[]
+}
+
+model CreditTransaction {
+  id        String   @id @default(cuid())
+  accountId String
+  amount    Int
+  type      String
+  reason    String
+  reference String?
+  metadata  String?
+  createdAt DateTime @default(now())
+
+  account CreditAccount @relation(fields: [accountId], references: [id])
+}
+
+model QueryRequest {
+  id               String      @id @default(cuid())
+  userId           String
+  category         String
+  rawInput         String
+  providerName     String      @default("mock")
+  providerRequestId String?
+  status           QueryStatus @default(WAITING)
+  costCredits      Int         @default(0)
+  attempts         Int         @default(0)
+  correlationId    String?
+  providerResult   String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  user  User               @relation(fields: [userId], references: [id])
+  events QueryStatusEvent[]
+}
+
+model QueryStatusEvent {
+  id        String      @id @default(cuid())
+  requestId String
+  status    QueryStatus
+  note      String?
+  createdAt DateTime    @default(now())
+
+  request QueryRequest @relation(fields: [requestId], references: [id])
+}
+
+model ProviderConfiguration {
+  id         String   @id @default(cuid())
+  name       String
+  enabled    Boolean  @default(false)
+  type       String
+  configJson String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model AuditLog {
+  id           String  @id @default(cuid())
+  userId       String?
+  action       String
+  resourceType String
+  resourceId   String?
+  metadata     String?
+  createdAt    DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+}
+
+model SupportTicket {
+  id        String   @id @default(cuid())
+  userId    String
+  subject   String
+  status    String   @default("open")
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
 }

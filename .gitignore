@@ -1,65 +1,9 @@
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
-
-const prisma = new PrismaClient();
-
-async function main() {
-  const customer = await prisma.user.upsert({
-    where: { email: 'cliente@neoconsulte.demo' },
-    update: {},
-    create: {
-      email: 'cliente@neoconsulte.demo',
-      name: 'Ana Costa',
-      passwordHash: await bcrypt.hash('demo123', 10),
-      role: 'CUSTOMER',
-      creditAccount: {
-        create: { balance: 18 },
-      },
-    },
-  });
-
-  await prisma.user.upsert({
-    where: { email: 'admin@neoconsulte.demo' },
-    update: {},
-    create: {
-      email: 'admin@neoconsulte.demo',
-      name: 'Admin Neo',
-      passwordHash: await bcrypt.hash('demo123', 10),
-      role: 'ADMIN',
-      creditAccount: {
-        create: { balance: 999 },
-      },
-    },
-  });
-
-  await prisma.plan.upsert({
-    where: { id: 'demo-plan-1' },
-    update: {},
-    create: {
-      id: 'demo-plan-1',
-      name: 'Plano Mensal',
-      priceCents: 15000,
-      active: true,
-      version: 1,
-      creditsIncluded: 50,
-      validDays: 30,
-      categoriesAllowed: 'CPF,CNPJ,Nome,Telefone,Placa',
-    },
-  });
-
-  await prisma.creditTransaction.createMany({
-    data: [
-      { accountId: (await prisma.creditAccount.findUnique({ where: { userId: customer.id } }))!.id, amount: 30, type: 'purchase', reason: 'Compra avulsa', reference: 'demo-purchase', metadata: 'Seed' },
-      { accountId: (await prisma.creditAccount.findUnique({ where: { userId: customer.id } }))!.id, amount: -2, type: 'consumed', reason: 'Consulta de CPF', reference: 'query-demo', metadata: 'Seed' },
-    ],
-  });
-}
-
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+node_modules
+.next
+.env
+.env.local
+.env.*
+!/.env.example
+prisma/dev.db
+prisma/dev.db-journal
+npm-debug.log*

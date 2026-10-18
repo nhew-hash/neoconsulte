@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'NeoConsulte',
-  description: 'Plataforma SaaS futurista de consultas e gestão de crédito',
+  description: 'Plataforma SaaS futura de consultas, créditos e gestão',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

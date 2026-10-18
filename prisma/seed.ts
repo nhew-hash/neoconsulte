@@ -1,186 +1,72 @@
-generator client {
-  provider = "prisma-client-js"
+import { PrismaClient, Role } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  const customer = await prisma.user.upsert({
+    where: { email: 'cliente@neoconsulte.demo' },
+    update: {},
+    create: {
+      email: 'cliente@neoconsulte.demo',
+      name: 'Ana Costa',
+      passwordHash: await bcrypt.hash('demo123', 10),
+      role: Role.CUSTOMER,
+    },
+  });
+
+  const admin = await prisma.user.upsert({
+    where: { email: 'admin@neoconsulte.demo' },
+    update: {},
+    create: {
+      email: 'admin@neoconsulte.demo',
+      name: 'Admin Neo',
+      passwordHash: await bcrypt.hash('demo123', 10),
+      role: Role.ADMIN,
+    },
+  });
+
+  await prisma.plan.upsert({
+    where: { id: 'demo-plan-1' },
+    update: {},
+    create: {
+      id: 'demo-plan-1',
+      name: 'Plano Mensal',
+      priceCents: 15000,
+      active: true,
+      version: 1,
+      creditsIncluded: 50,
+      validDays: 30,
+      categoriesAllowed: 'CPF,CNPJ,Nome,Telefone,Placa',
+    },
+  });
+
+  const customerAccount = await prisma.creditAccount.upsert({
+    where: { userId: customer.id },
+    update: { balance: 18 },
+    create: { userId: customer.id, balance: 18 },
+  });
+
+  const adminAccount = await prisma.creditAccount.upsert({
+    where: { userId: admin.id },
+    update: { balance: 999 },
+    create: { userId: admin.id, balance: 999 },
+  });
+
+  await prisma.creditTransaction.createMany({
+    data: [
+      { accountId: customerAccount.id, amount: 30, type: 'purchase', reason: 'Compra avulsa', reference: 'demo-purchase', metadata: 'Seed' },
+      { accountId: customerAccount.id, amount: -2, type: 'consumed', reason: 'Consulta de CPF', reference: 'query-demo', metadata: 'Seed' },
+      { accountId: adminAccount.id, amount: 999, type: 'purchase', reason: 'Saldo administrativo', reference: 'admin-bootstrap', metadata: 'Seed' },
+    ],
+  });
 }
 
-datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
-}
-
-enum Role {
-  ADMIN
-  SUPPORT
-  CUSTOMER
-}
-
-enum QueryStatus {
-  WAITING
-  PROCESSING
-  COMPLETED
-  FAILED
-  CANCELLED
-  REVIEW
-}
-
-enum PaymentStatus {
-  PENDING
-  CONFIRMED
-  REFUNDED
-  FAILED
-}
-
-model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  name        String?
-  passwordHash String
-  role        Role     @default(CUSTOMER)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  profile         Profile?
-  creditAccount   CreditAccount?
-  payments        Payment[]
-  queryRequests   QueryRequest[]
-  supportTickets  SupportTicket[]
-  auditLogs       AuditLog[]
-  subscriptions   Subscription[]
-}
-
-model Profile {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  phone     String?
-  company   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id])
-}
-
-model Plan {
-  id                String         @id @default(cuid())
-  name              String
-  priceCents        Int
-  active            Boolean        @default(true)
-  version           Int            @default(1)
-  creditsIncluded   Int
-  validDays         Int?
-  categoriesAllowed String?
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-
-  subscriptions Subscription[]
-}
-
-model Subscription {
-  id              String    @id @default(cuid())
-  userId          String
-  planId          String
-  status          String    @default("active")
-  startsAt        DateTime  @default(now())
-  renewsAt        DateTime?
-  canceledAt      DateTime?
-  createdAt       DateTime  @default(now())
-
-  user User @relation(fields: [userId], references: [id])
-  plan Plan @relation(fields: [planId], references: [id])
-}
-
-model Payment {
-  id             String        @id @default(cuid())
-  userId         String
-  planId         String?
-  amountCents    Int
-  status         PaymentStatus @default(PENDING)
-  provider       String?
-  providerRef    String?
-  createdAt      DateTime      @default(now())
-
-  user User @relation(fields: [userId], references: [id])
-}
-
-model CreditAccount {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  balance   Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id])
-  transactions CreditTransaction[]
-}
-
-model CreditTransaction {
-  id          String   @id @default(cuid())
-  accountId   String
-  amount      Int
-  type        String
-  reason      String
-  reference   String?
-  metadata    String?
-  createdAt   DateTime @default(now())
-
-  account CreditAccount @relation(fields: [accountId], references: [id])
-}
-
-model QueryRequest {
-  id                  String       @id @default(cuid())
-  userId              String
-  category            String
-  rawInput            String
-  providerName        String       @default("mock")
-  providerRequestId    String?
-  status              QueryStatus  @default(WAITING)
-  costCredits         Int          @default(0)
-  attempts            Int          @default(0)
-  correlationId       String?
-  providerResult      String?
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
-
-  user User @relation(fields: [userId], references: [id])
-  events QueryStatusEvent[]
-}
-
-model QueryStatusEvent {
-  id          String   @id @default(cuid())
-  requestId   String
-  status      QueryStatus
-  note        String?
-  createdAt   DateTime @default(now())
-
-  request QueryRequest @relation(fields: [requestId], references: [id])
-}
-
-model ProviderConfiguration {
-  id          String   @id @default(cuid())
-  name        String
-  enabled     Boolean  @default(false)
-  type        String
-  configJson  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model AuditLog {
-  id          String   @id @default(cuid())
-  userId      String?
-  action      String
-  resourceType String
-  resourceId  String?
-  metadata    String?
-  createdAt   DateTime @default(now())
-
-  user User? @relation(fields: [userId], references: [id])
-}
-
-model SupportTicket {
-  id          String   @id @default(cuid())
-  userId      String
-  subject     String
-  status      String   @default("open")
-  createdAt   DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id])
-}
+main()
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

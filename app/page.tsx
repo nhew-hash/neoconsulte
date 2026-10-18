@@ -17,12 +17,13 @@ export default function HomePage() {
             <div className="text-xs text-slate-400">SaaS de consultas</div>
           </div>
         </div>
+
         <nav className="hidden items-center gap-8 text-sm text-slate-300 md:flex">
           <Link href="#sobre">Sobre</Link>
-          <Link href="#como-funciona">Como funciona</Link>
           <Link href="#planos">Planos</Link>
           <Link href="#faq">FAQ</Link>
         </nav>
+
         <div className="flex items-center gap-3">
           <Link href="/login" className="rounded-full border border-slate-700 px-4 py-2 text-sm text-slate-100">Entrar</Link>
           <Link href="/signup" className="rounded-full bg-teal-400 px-4 py-2 text-sm font-semibold text-slate-950">Começar</Link>
@@ -36,7 +37,7 @@ export default function HomePage() {
             Plataforma de consultas com segurança, transparência e escalabilidade.
           </h1>
           <p className="mt-6 max-w-xl text-lg text-slate-300">
-            O NeoConsulte oferece gestão de consultas, créditos, histórico e painel administrativo com arquitetura preparada para integraç��o autorizada e provider real.
+            O NeoConsulte oferece gestão de consultas, créditos, histórico e painel administrativo com arquitetura preparada para integração autorizada e provider real.
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
             <Link href="/signup" className="rounded-full bg-teal-400 px-6 py-3 font-semibold text-slate-950">Solicitar acesso</Link>
@@ -117,9 +118,9 @@ export default function HomePage() {
         <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-8">
           <p className="text-sm uppercase tracking-[0.24em] text-teal-300">FAQ</p>
           <div className="mt-6 space-y-4 text-slate-300">
-            <div><strong className="text-white">É um produto real ou apenas mock?</strong><p className="mt-2">Este repositório entrega uma base operacional de SaaS com provider simulado, estruturas de dados e fluxos de crédito/consulta claros. A integração autenticada com Telegram ou fornecedor externo fica em etapa futura e necessita autorização.</p></div>
-            <div><strong className="text-white">Como são tratados créditos?</strong><p className="mt-2">O sistema usa um ledger financeiro com transações e proteção de saldo negativo, sem confiar no frontend para validar cobrança.</p></div>
-            <div><strong className="text-white">O painel administrativo está funcionando?</strong><p className="mt-2">Há uma base administrativa pronta para métricas e ajustes, includindo logs e gerenciamento de status.</p></div>
+            <div><strong className="text-white">É um produto real ou apenas mock?</strong><p className="mt-2">Este repositório entrega uma base operacional de SaaS com provider simulado, estrutura de dados e fluxos de crédito/consulta claros. A integração com fornecedores externos precisa de autorização e documentação.</p></div>
+            <div><strong className="text-white">Como são tratados créditos?</strong><p className="mt-2">O sistema usa um ledger financeiro com registro de compras, consumo e ajustes, sem confiar no frontend para validar saldo ou cobrança.</p></div>
+            <div><strong className="text-white">O painel administrativo está pronto?</strong><p className="mt-2">Há uma base administrativa funcional para visão geral, configuração e monitoramento de status com registros de auditoria.</p></div>
           </div>
         </div>
       </section>

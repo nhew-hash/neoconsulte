@@ -13,7 +13,7 @@ export default function LoginPage() {
         <form className="space-y-5">
           <label className="block text-sm text-slate-300">
             <span className="mb-2 block">E-mail</span>
-            <input className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none ring-0 transition focus:border-teal-400" defaultValue="cliente@neoconsulte.demo" />
+            <input className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-teal-400" defaultValue="cliente@neoconsulte.demo" />
           </label>
           <label className="block text-sm text-slate-300">
             <span className="mb-2 block">Senha</span>

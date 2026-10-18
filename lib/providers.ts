@@ -1,30 +1,79 @@
-export const dashboardCards = [
-  { label: 'Saldo de créditos', value: '18', meta: 'Disponível' },
-  { label: 'Consultas no período', value: '14', meta: 'Últimos 30 dias' },
-  { label: 'Solicitações em processamento', value: '3', meta: 'Aguardando resposta' },
-  { label: 'Plano atual', value: 'Mensal', meta: 'Válido até 15/11' },
-];
+export type QueryCategory = 'CPF' | 'CNPJ' | 'Nome' | 'Telefone' | 'Placa';
 
-export const recentHistory = [
-  { id: 'r1', title: 'Consulta de CPF', date: '18/10/2026 · 14:15', status: 'Concluída' },
-  { id: 'r2', title: 'Consulta de Placa', date: '17/10/2026 · 12:00', status: 'Em processamento' },
-  { id: 'r3', title: 'Consulta de Nome', date: '16/10/2026 · 09:03', status: 'Concluída' },
-];
+export interface QueryRequestInput {
+  category: QueryCategory;
+  input: string;
+  customerId?: string;
+}
 
-export const systemAlerts = [
-  { title: 'Provider em modo simulado', message: 'O provedor de demonstração está ativo e não representa um canal real do Telegram.' },
-  { title: 'Créditos configurados', message: 'O saldo e os logs de transação foram preparados para auditoria e extensões futuras.' },
-];
+export interface QueryResponse {
+  ok: boolean;
+  requestId: string;
+  correlationId: string;
+  provider: 'mock';
+  status: 'queued' | 'processing' | 'completed' | 'failed';
+  costCredits: number;
+  category: QueryCategory;
+  providerNote: string;
+}
 
-export const adminKPIs = [
-  { label: 'Receita confirmada', value: 'R$ 2.300', meta: 'Últimos 30 dias' },
-  { label: 'Pagamentos pendentes', value: '4', meta: 'Em validação' },
-  { label: 'Consultas por status', value: '18', meta: 'Ciclo atual' },
-  { label: 'Taxa de falhas', value: '2%', meta: 'Provider mock' },
-];
+export interface ProviderHealthStatus {
+  name: string;
+  enabled: boolean;
+  status: 'healthy' | 'degraded' | 'offline';
+  lastCheck: string;
+  message: string;
+}
 
-export const adminTableRows = [
-  { name: 'Telegram provider', status: 'Operacional', attempts: '7', lastEvent: '2 min atrás' },
-  { name: 'Mock provider', status: 'Em manutenção', attempts: '3', lastEvent: '5 min atrás' },
-  { name: 'Gateway de pagamentos', status: 'Operacional', attempts: '4', lastEvent: '12 min atrás' },
-];
+export interface QueryProvider {
+  name: string;
+  enabled: boolean;
+  process(input: QueryRequestInput): Promise<QueryResponse>;
+  health(): Promise<ProviderHealthStatus>;
+}
+
+export class MockQueryProvider implements QueryProvider {
+  name = 'mock';
+  enabled = true;
+
+  async process(input: QueryRequestInput): Promise<QueryResponse> {
+    const requestId = `demo-${Date.now()}`;
+    const correlationId = `corr-${Math.random().toString(36).slice(2, 10)}`;
+
+    return {
+      ok: true,
+      requestId,
+      correlationId,
+      provider: 'mock',
+      status: 'queued',
+      costCredits: 2,
+      category: input.category,
+      providerNote: 'Provider em modo de demonstração. Nenhum dado real é apresentado.',
+    };
+  }
+
+  async health(): Promise<ProviderHealthStatus> {
+    return {
+      name: this.name,
+      enabled: this.enabled,
+      status: 'healthy',
+      lastCheck: new Date().toISOString(),
+      message: 'Demo provider ativo sem conexão real com Telegram.',
+    };
+  }
+}
+
+export class QueryJobService {
+  async enqueue(input: QueryRequestInput): Promise<QueryResponse> {
+    const provider = new MockQueryProvider();
+    return provider.process(input);
+  }
+}
+
+export class ProviderHealthService {
+  async checkAll(): Promise<ProviderHealthStatus[]> {
+    const provider = new MockQueryProvider();
+    const health = await provider.health();
+    return [health];
+  }
+}
