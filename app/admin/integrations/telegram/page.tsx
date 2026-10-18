@@ -3,11 +3,21 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
+type TelegramState = {
+  status: 'disconnected' | 'waiting_auth' | 'connected' | 'error' | 'expired';
+  message: string;
+  events: any[];
+  expiresAt?: string | null;
+  qrCode?: string | null;
+};
+
 export default function TelegramIntegrationPage() {
-  const [state, setState] = useState<any>({
+  const [state, setState] = useState<TelegramState>({
     status: 'disconnected',
     message: 'Carregando integração do Telegram…',
     events: [],
+    expiresAt: null,
+    qrCode: null,
   });
 
   const refreshState = async () => {
@@ -24,13 +34,16 @@ export default function TelegramIntegrationPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const statusClass = {
+  const statusMap = {
     disconnected: 'bg-slate-700 text-slate-200',
     waiting_auth: 'bg-amber-500/10 text-amber-300',
     connected: 'bg-emerald-500/10 text-emerald-300',
     error: 'bg-red-500/10 text-red-300',
     expired: 'bg-orange-500/10 text-orange-300',
-  }[state.status ?? 'disconnected'];
+  } as const;
+
+  const statusKey = (state.status ?? 'disconnected') as keyof typeof statusMap;
+  const statusClass = statusMap[statusKey];
 
   const action = async (path: string, payload?: Record<string, string>) => {
     const response = await fetch(path, {
