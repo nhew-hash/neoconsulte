@@ -1,6 +1,38 @@
-import Link from 'next/link';
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState('cliente@neoconsulte.demo');
+  const [password, setPassword] = useState('demo123');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const payload = await res.json();
+    setLoading(false);
+
+    if (!res.ok) {
+      setError(payload.error ?? 'Credenciais inválidas');
+      return;
+    }
+
+    router.push(payload.redirect ?? '/dashboard');
+    router.refresh();
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 py-12 text-slate-50">
       <div className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-900/80 p-8 shadow-soft">
@@ -10,21 +42,22 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-slate-400">Acesso ao painel do cliente</p>
         </div>
 
-        <form className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <label className="block text-sm text-slate-300">
             <span className="mb-2 block">E-mail</span>
-            <input className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-teal-400" defaultValue="cliente@neoconsulte.demo" />
+            <input value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-teal-400" />
           </label>
           <label className="block text-sm text-slate-300">
             <span className="mb-2 block">Senha</span>
-            <input type="password" className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-teal-400" defaultValue="demo123" />
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none transition focus:border-teal-400" />
           </label>
-          <button type="button" className="w-full rounded-2xl bg-teal-400 px-5 py-3 font-semibold text-slate-950">Acessar dashboard</button>
+          {error ? <p className="text-sm text-rose-400">{error}</p> : null}
+          <button disabled={loading} type="submit" className="w-full rounded-2xl bg-teal-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60">{loading ? 'Entrando...' : 'Acessar dashboard'}</button>
         </form>
 
         <div className="mt-6 flex items-center justify-between text-sm text-slate-400">
-          <Link href="/signup" className="text-teal-300">Criar conta</Link>
-          <Link href="/" className="text-slate-300">Voltar ao início</Link>
+          <a href="/signup" className="text-teal-300">Criar conta</a>
+          <a href="/" className="text-slate-300">Voltar ao início</a>
         </div>
       </div>
     </main>
