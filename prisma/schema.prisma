@@ -195,3 +195,42 @@ model Session {
 
   user User @relation(fields: [userId], references: [id])
 }
+
+// Telegram integration models
+model TelegramConnection {
+  id         String           @id @default(cuid())
+  name       String
+  enabled    Boolean          @default(true)
+  provider   String
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  sessions   TelegramSession[]
+  events     TelegramEvent[]
+}
+
+model TelegramSession {
+  id            String   @id @default(cuid())
+  connectionId  String
+  fingerprint   String?
+  encryptedBlob String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  connection TelegramConnection @relation(fields: [connectionId], references: [id])
+}
+
+model TelegramEvent {
+  id           String   @id @default(cuid())
+  connectionId String
+  messageId    String?
+  chatId       String
+  from         String?
+  text         String?
+  direction    String
+  correlationId String?
+  payload      String?
+  createdAt    DateTime @default(now())
+
+  connection TelegramConnection @relation(fields: [connectionId], references: [id])
+}
