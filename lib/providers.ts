@@ -10,7 +10,7 @@ export interface QueryResponse {
   ok: boolean;
   requestId: string;
   correlationId: string;
-  provider: 'mock';
+  provider: 'mock' | 'telegram-demo';
   status: 'queued' | 'processing' | 'completed' | 'failed';
   costCredits: number;
   category: QueryCategory;

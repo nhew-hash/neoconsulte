@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/db';
@@ -28,16 +29,28 @@ export default async function AdminPage() {
         </header>
 
         <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"><div className="text-sm text-slate-400">Usuários</div><div className="mt-3 text-3xl font-semibold text-white">{userCount}</div><div className="mt-2 text-xs text-slate-400">Cadastros ativos</div></div>
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"><div className="text-sm text-slate-400">Consultas</div><div className="mt-3 text-3xl font-semibold text-white">{queryCount}</div><div className="mt-2 text-xs text-slate-400">Total do sistema</div></div>
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"><div className="text-sm text-slate-400">Pagamentos pendentes</div><div className="mt-3 text-3xl font-semibold text-white">4</div><div className="mt-2 text-xs text-slate-400">Em validação</div></div>
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"><div className="text-sm text-slate-400">Taxa de falhas</div><div className="mt-3 text-3xl font-semibold text-white">2%</div><div className="mt-2 text-xs text-slate-400">Provider mock</div></div>
+          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"><div className="text-sm text-slate-400">Usuários</div><div className="mt-3 text-3xl font-semibold text-white">{userCount}</div></div>
+          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"><div className="text-sm text-slate-400">Consultas</div><div className="mt-3 text-3xl font-semibold text-white">{queryCount}</div></div>
+          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"><div className="text-sm text-slate-400">Pagamentos pendentes</div><div className="mt-3 text-3xl font-semibold text-white">{accounts.filter((a) => a.balance > 0).length}</div></div>
+          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"><div className="text-sm text-slate-400">Taxa de falhas</div><div className="mt-3 text-3xl font-semibold text-white">0%</div></div>
+        </section>
+
+        <section className="mt-8 rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-white">Ações rápidas</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <Link href="/admin/integrations/telegram" className="rounded-2xl border border-slate-800 bg-slate-950/60 p-5 text-left">
+              <div className="text-sm uppercase tracking-[0.2em] text-teal-300">Telegram</div>
+              <div className="mt-3 text-lg font-semibold text-white">Gerenciar integração</div>
+              <div className="mt-2 text-sm text-slate-400">Conectar, verificar QR, testar mensagens e consultar estado.</div>
+            </Link>
+          </div>
         </section>
 
         <section className="mt-8 rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
           <div className="mb-5 flex items-center justify-between">
             <h2 className="text-xl font-semibold text-white">Status dos providers</h2>
-            <span className="rounded-full border border-slate-700 px-3 py-1 text-sm text-slate-200">Atualizar</span>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm text-slate-300">
