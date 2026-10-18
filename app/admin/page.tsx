@@ -4,6 +4,12 @@ import { cookies } from 'next/headers';
 import { prisma } from '@/lib/db';
 import { getSessionByToken } from '@/lib/session';
 
+type CreditAccount = {
+  id: string;
+  userId: string;
+  balance: number;
+};
+
 export default async function AdminPage() {
   const token = cookies().get('neo_session')?.value;
   if (!token) redirect('/login');
@@ -13,7 +19,7 @@ export default async function AdminPage() {
 
   const userCount = await prisma.user.count();
   const queryCount = await prisma.queryRequest.count();
-  const accounts = await prisma.creditAccount.findMany({ orderBy: { balance: 'desc' }, take: 5 });
+  const accounts: CreditAccount[] = await prisma.creditAccount.findMany({ orderBy: { balance: 'desc' }, take: 5 });
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-50">
@@ -31,7 +37,7 @@ export default async function AdminPage() {
         <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"><div className="text-sm text-slate-400">Usuários</div><div className="mt-3 text-3xl font-semibold text-white">{userCount}</div></div>
           <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"><div className="text-sm text-slate-400">Consultas</div><div className="mt-3 text-3xl font-semibold text-white">{queryCount}</div></div>
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"><div className="text-sm text-slate-400">Pagamentos pendentes</div><div className="mt-3 text-3xl font-semibold text-white">{accounts.filter((a) => a.balance > 0).length}</div></div>
+          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"><div className="text-sm text-slate-400">Pagamentos pendentes</div><div className="mt-3 text-3xl font-semibold text-white">{accounts.filter((acct) => acct.balance > 0).length}</div></div>
           <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5"><div className="text-sm text-slate-400">Taxa de falhas</div><div className="mt-3 text-3xl font-semibold text-white">0%</div></div>
         </section>
 
