@@ -1,0 +1,20 @@
+export type QueryCategory = 'CPF' | 'CNPJ' | 'Nome' | 'Telefone' | 'Placa';
+
+export interface QueryRequestInput {
+  category: QueryCategory;
+  input: string;
+  customerId?: string;
+}
+
+export async function enqueueQuery(input: QueryRequestInput) {
+  return {
+    ok: true,
+    requestId: `demo-${Math.random().toString(36).slice(2, 10)}`,
+    correlationId: `corr-${Math.random().toString(36).slice(2, 10)}`,
+    provider: 'mock',
+    status: 'queued',
+    costCredits: 2,
+    category: input.category,
+    providerNote: 'Provider em modo de demonstração. Nenhum dado pessoal real é exibido.',
+  };
+}
