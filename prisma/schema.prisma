@@ -45,6 +45,7 @@ model User {
   supportTickets SupportTicket[]
   auditLogs     AuditLog[]
   subscriptions Subscription[]
+  sessions      Session[]
 }
 
 model Profile {
@@ -79,7 +80,7 @@ model Subscription {
   planId     String
   status     String    @default("active")
   startsAt   DateTime  @default(now())
-  renewsAt  DateTime?
+  renewsAt   DateTime?
   canceledAt DateTime?
   createdAt  DateTime  @default(now())
 
@@ -180,6 +181,16 @@ model SupportTicket {
   userId    String
   subject   String
   status    String   @default("open")
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime?
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
