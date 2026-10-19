@@ -1,5 +1,5 @@
 export const dynamic = 'force-dynamic';
-export const fetchCache = 'no-store';
+export const fetchCache = 'force-no-store';
 
 import { prisma } from '@/lib/db';
 
